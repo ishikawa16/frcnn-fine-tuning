@@ -7,21 +7,7 @@ from torchvision.ops import MultiScaleRoIAlign
 from torchvision import transforms
 
 from roi_heads import RoIHeads
-
-
-class SaveFeatures:
-    def __init__(self):
-        self.features = []
-
-    def __call__(self, module, inputs, outputs):
-        self.features.append(outputs.clone().detach())
-
-    def clear(self):
-        self.outputs = []
-
-
-def collate_fn(batch):
-    return tuple(zip(*batch))
+from utils import SaveFeatures, collate_fn
 
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')

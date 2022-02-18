@@ -4,10 +4,7 @@ from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 from alfred import AlfredDataset
-
-
-def collate_fn(batch):
-    return tuple(zip(*batch))
+from utils import collate_fn
 
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
