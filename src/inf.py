@@ -18,8 +18,9 @@ def main():
     image = Image.open('data/alfred_pick_only/images/000001.jpg')
     convert_tensor = transforms.ToTensor()
     image = convert_tensor(image)
-    images = [image.to(device)]
-    outputs = model(images)
+    image = [image.to(device)]
+
+    output = model(image)
 
 
 if __name__=='__main__':
