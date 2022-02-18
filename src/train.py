@@ -1,9 +1,8 @@
 import torch
 from torch.utils.data import DataLoader, random_split
-from torchvision.models.detection import fasterrcnn_resnet50_fpn
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 from alfred import AlfredDataset
+from frcnn import FasterRCNN
 from utils import collate_fn
 
 
@@ -29,8 +28,6 @@ def build_dataloader(dataset, collate_fn, is_train):
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    num_classes = 2
-
     dataset = AlfredDataset('data/alfred_pick_only')
     train_size = int(len(dataset) * 0.8)
     val_size = len(dataset) - train_size
@@ -39,8 +36,7 @@ def main():
     train_dataloader = build_dataloader(train_dataset, collate_fn, is_train=True)
     val_dataloader = build_dataloader(val_dataset, collate_fn, is_train=False)
 
-    model = fasterrcnn_resnet50_fpn(pretrained=True)
-    model.roi_heads.box_predictor = FastRCNNPredictor(1024, num_classes)
+    model = FasterRCNN(num_classes=2, training=True)
     model.to(device)
 
     params = [p for p in model.parameters() if p.requires_grad]
