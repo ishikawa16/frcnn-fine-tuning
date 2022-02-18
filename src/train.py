@@ -31,6 +31,11 @@ def build_optimizer(model):
     return optimizer
 
 
+def save_model(model, epoch):
+    save_path = f'model/alfred_model_e{epoch+1:02}.pth'
+    torch.save(model.state_dict(), save_path)
+
+
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -65,7 +70,7 @@ def main():
             if (i+1) % 10 == 0:
                 print(f"Epoch #{epoch+1} Iteration #{i+1} Loss: {loss_value}")
 
-        torch.save(model.state_dict(), f'model/alfred_model_e{epoch+1:02}.pth')
+        save_model(model, epoch)
 
 
 if __name__=='__main__':
