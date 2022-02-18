@@ -21,7 +21,6 @@ def build_dataloader(dataset, collate_fn, is_train):
             shuffle=False,
             collate_fn=collate_fn
             )
-
     return dataloader
 
 
