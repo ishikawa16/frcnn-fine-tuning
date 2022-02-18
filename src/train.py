@@ -58,4 +58,4 @@ for epoch in range(num_epochs):
         if (i+1) % 10 == 0:
             print(f"Epoch #{epoch+1} Iteration #{i+1} Loss: {loss_value}")
 
-    torch.save(model.state_dict(), f'alfred_model_e{epoch+1:02}.pth')
+    torch.save(model.state_dict(), f'model/alfred_model_e{epoch+1:02}.pth')
