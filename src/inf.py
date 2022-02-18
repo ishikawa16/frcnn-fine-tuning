@@ -45,6 +45,8 @@ model.roi_heads = RoIHeads(
     nms_thresh=0.5,
     detections_per_img=100,
     )
+model.load_state_dict(torch.load('model/alfred_model_e10.pth'))
+
 save_features = SaveFeatures()
 model.roi_heads.box_head.fc6.register_forward_hook(save_features)
 model.to(device)
