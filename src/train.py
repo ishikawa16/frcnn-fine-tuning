@@ -7,6 +7,25 @@ from alfred import AlfredDataset
 from utils import collate_fn
 
 
+def build_dataloader(dataset, collate_fn, is_train):
+    if is_train:
+        dataloader = DataLoader(
+            dataset,
+            batch_size=4,
+            shuffle=True,
+            collate_fn=collate_fn
+            )
+    else:
+        dataloader = DataLoader(
+            dataset,
+            batch_size=4,
+            shuffle=False,
+            collate_fn=collate_fn
+            )
+
+    return dataloader
+
+
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -17,19 +36,8 @@ def main():
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-    train_dataloader = DataLoader(
-        train_dataset,
-        batch_size=4,
-        shuffle=True,
-        collate_fn=collate_fn
-        )
-
-    val_dataloader = DataLoader(
-        val_dataset,
-        batch_size=4,
-        shuffle=False,
-        collate_fn=collate_fn
-        )
+    train_dataloader = build_dataloader(train_dataset, collate_fn, is_train=True)
+    val_dataloader = build_dataloader(val_dataset, collate_fn, is_train=False)
 
     model = fasterrcnn_resnet50_fpn(pretrained=True)
     model.roi_heads.box_predictor = FastRCNNPredictor(1024, num_classes)
