@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader, random_split
 
 from alfred import AlfredDataset
 from frcnn import FasterRCNN
-from utils import collate_fn
+from utils import collate_fn, fix_seed
 
 
 def build_dataloader(dataset, collate_fn, is_train):
@@ -37,6 +37,8 @@ def save_model(model, epoch):
 
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    fix_seed(42)
 
     dataset = AlfredDataset('data/alfred_pick_only')
     train_size = int(len(dataset) * 0.8)
