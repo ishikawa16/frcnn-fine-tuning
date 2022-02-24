@@ -9,23 +9,21 @@ from torchvision import transforms
 
 
 class AlfredDataset(Dataset):
-    def __init__(self, root):
+    def __init__(self, root, split):
         super().__init__()
         self.root = root
-        self.imgs = list(sorted(os.listdir(os.path.join(root, 'images'))))
-        self.data = list(sorted(os.listdir(os.path.join(root, 'data'))))
+        self.imgs = list(sorted(os.listdir(os.path.join(root, 'image'))))
+        with open(os.path.join(root, f'{split}.jsonl')) as f:
+            self.data = sorted([json.loads(line) for line in f], key=lambda x:x['id'])
 
     def __getitem__(self, idx):
-        img_path = os.path.join(self.root, 'images', self.imgs[idx])
-        data_path = os.path.join(self.root, 'data', self.data[idx])
-
+        img_path = os.path.join(self.root, 'image', self.imgs[idx])
         img = Image.open(img_path)
-        convert_tensor = transforms.ToTensor()
-        img = convert_tensor(img)
-        with open(data_path) as f:
-            data = json.load(f)
+        img = transforms.functional.to_tensor(img)
 
-        boxes = [data['target']['bbox']]
+        data = self.data[idx]
+
+        boxes = [data['target']['box']]
         num_objs = 1
 
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
@@ -44,4 +42,4 @@ class AlfredDataset(Dataset):
         return img, target
 
     def __len__(self):
-        return len(self.imgs)
+        return len(self.data)

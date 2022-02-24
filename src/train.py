@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
 from alfred import AlfredDataset
 from frcnn import FasterRCNN
@@ -40,10 +40,8 @@ def main():
 
     fix_seed(42)
 
-    dataset = AlfredDataset('data/alfred_pick_only')
-    train_size = int(len(dataset) * 0.8)
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+    train_dataset = AlfredDataset('data/alfred-objects', split='train')
+    val_dataset = AlfredDataset('data/alfred-objects', split='valid_seen')
 
     train_dataloader = build_dataloader(train_dataset, collate_fn, is_train=True)
     val_dataloader = build_dataloader(val_dataset, collate_fn, is_train=False)
