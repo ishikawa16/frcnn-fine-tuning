@@ -14,7 +14,7 @@ def main():
 
     model.eval()
 
-    image = Image.open('data/alfred_pick_only/images/000001.jpg')
+    image = Image.open('data/alfred-i/image/target/000001.jpg')
     convert_tensor = transforms.ToTensor()
     image = convert_tensor(image)
     image = [image.to(device)]
