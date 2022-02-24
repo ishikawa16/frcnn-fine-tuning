@@ -659,6 +659,7 @@ class RoIHeads(nn.Module):
         box_regression,  # type: Tensor
         proposals,  # type: List[Tensor]
         image_shapes,  # type: List[Tuple[int, int]]
+        fc6_features,  # type: Tensor
     ):
         # type: (...) -> Tuple[List[Tensor], List[Tensor], List[Tensor]]
         device = class_logits.device
@@ -669,14 +670,18 @@ class RoIHeads(nn.Module):
 
         pred_scores = F.softmax(class_logits, -1)
 
+        fc6_features = fc6_features.unsqueeze_(1)
+        fc6_features = fc6_features.repeat(1, num_classes, 1)
+
         pred_boxes_list = pred_boxes.split(boxes_per_image, 0)
         pred_scores_list = pred_scores.split(boxes_per_image, 0)
+        fc6_features_list = fc6_features.split(boxes_per_image, 0)
 
         all_boxes = []
         all_scores = []
         all_labels = []
-        all_keeps = []
-        for boxes, scores, image_shape in zip(pred_boxes_list, pred_scores_list, image_shapes):
+        all_features = []
+        for boxes, scores, image_shape, features in zip(pred_boxes_list, pred_scores_list, image_shapes, fc6_features_list):
             boxes = box_ops.clip_boxes_to_image(boxes, image_shape)
 
             # create labels for each prediction
@@ -687,32 +692,34 @@ class RoIHeads(nn.Module):
             boxes = boxes[:, 1:]
             scores = scores[:, 1:]
             labels = labels[:, 1:]
+            features = features[:, 1:]
 
             # batch everything, by making every class prediction be a separate instance
             boxes = boxes.reshape(-1, 4)
             scores = scores.reshape(-1)
             labels = labels.reshape(-1)
+            features = features.reshape(-1, 1024)
 
             # remove low scoring boxes
             inds = torch.where(scores > self.score_thresh)[0]
-            boxes, scores, labels = boxes[inds], scores[inds], labels[inds]
+            boxes, scores, labels, features = boxes[inds], scores[inds], labels[inds], features[inds]
 
             # remove empty boxes
             keep = box_ops.remove_small_boxes(boxes, min_size=1e-2)
-            boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
+            boxes, scores, labels, features = boxes[keep], scores[keep], labels[keep], features[keep]
 
             # non-maximum suppression, independently done per class
             keep = box_ops.batched_nms(boxes, scores, labels, self.nms_thresh)
             # keep only topk scoring predictions
             keep = keep[: self.detections_per_img]
-            boxes, scores, labels = boxes[keep], scores[keep], labels[keep]
+            boxes, scores, labels, features = boxes[keep], scores[keep], labels[keep], features[keep]
 
             all_boxes.append(boxes)
             all_scores.append(scores)
             all_labels.append(labels)
-            all_keeps.append(keep)
+            all_features.append(features)
 
-        return all_boxes, all_scores, all_labels, all_keeps
+        return all_boxes, all_scores, all_labels, all_features
 
     def forward(
         self,
@@ -746,7 +753,7 @@ class RoIHeads(nn.Module):
             matched_idxs = None
 
         box_features = self.box_roi_pool(features, proposals, image_shapes)
-        box_features = self.box_head(box_features)
+        box_features, fc6_features = self.box_head(box_features)
         class_logits, box_regression = self.box_predictor(box_features)
 
         result: List[Dict[str, torch.Tensor]] = []
@@ -756,7 +763,7 @@ class RoIHeads(nn.Module):
             loss_classifier, loss_box_reg = fastrcnn_loss(class_logits, box_regression, labels, regression_targets)
             losses = {"loss_classifier": loss_classifier, "loss_box_reg": loss_box_reg}
         else:
-            boxes, scores, labels, keeps = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes)
+            boxes, scores, labels, fc6_features = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes, fc6_features)
             num_images = len(boxes)
             for i in range(num_images):
                 result.append(
@@ -764,7 +771,7 @@ class RoIHeads(nn.Module):
                         "boxes": boxes[i],
                         "labels": labels[i],
                         "scores": scores[i],
-                        "keeps": keeps[i],
+                        "fc6_features": fc6_features[i],
                     }
                 )
 

@@ -1,10 +1,10 @@
 from torch import nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
-from torchvision.models.detection.faster_rcnn import TwoMLPHead, FastRCNNPredictor
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.ops import MultiScaleRoIAlign
 
 from roi_heads import RoIHeads
-from utils import SaveFeatures
+from two_mlp_head import TwoMLPHead
 
 
 class FasterRCNN(nn.Module):
@@ -18,7 +18,6 @@ class FasterRCNN(nn.Module):
         self.fix_dimension()
         if save_features:
             self.fix_roiheads()
-            self.register_hook()
 
         if checkpoint is not None:
             self.model.load_state_dict(checkpoint)
@@ -48,10 +47,6 @@ class FasterRCNN(nn.Module):
             nms_thresh=0.5,
             detections_per_img=100,
             )
-
-    def register_hook(self):
-        save_features = SaveFeatures()
-        self.model.roi_heads.box_head.fc6.register_forward_hook(save_features)
 
     def forward(self, images, targets=None):
         if self.training:
