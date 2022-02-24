@@ -8,7 +8,7 @@ from frcnn import FasterRCNN
 def main():
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    checkpoint = torch.load('model/alfred_model_e10.pth')
+    checkpoint = torch.load('model/alfred_model_e05.pth')
     model = FasterRCNN(num_classes=2, training=False, checkpoint=checkpoint, save_features=False)
     model.to(device)
 
