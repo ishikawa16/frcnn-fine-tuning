@@ -20,7 +20,7 @@ class FasterRCNN(nn.Module):
             self.fix_roiheads()
 
         if checkpoint is not None:
-            self.model.load_state_dict(checkpoint)
+            self.load_state_dict(checkpoint)
 
     def fix_dimension(self):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
