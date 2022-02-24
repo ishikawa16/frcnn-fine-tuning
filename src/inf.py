@@ -15,8 +15,7 @@ def main():
     model.eval()
 
     image = Image.open('data/alfred-i/image/target/000001.jpg')
-    convert_tensor = transforms.ToTensor()
-    image = convert_tensor(image)
+    image = transforms.functional.to_tensor(image)
     image = [image.to(device)]
 
     output = model(image)
