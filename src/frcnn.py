@@ -1,5 +1,9 @@
+import json
+from PIL import Image
+
 import torch
 from torch.utils.data import DataLoader
+from torchvision import transforms
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.ops import MultiScaleRoIAlign
@@ -50,6 +54,25 @@ class FasterRCNN():
 
             self.save_model(epoch)
 
+    def predict_oneshot(self):
+        self.prepare_model()
+        self.model.eval()
+
+        image = Image.open(self.args.image)
+        image = transforms.functional.to_tensor(image)
+        image = [image.to(self.device)]
+
+        output = self.model(image)
+        result = {k: v.tolist() for k, v in output[0].items()}
+        with open('output/result.json', 'w') as f:
+            json.dump(result, f)
+
+    def prepare_model(self):
+        self.load_model()
+        if self.args.checkpoint is not None:
+            self.model.load_state_dict(self.checkpoint)
+        self.model.to(self.device)
+
     def build_dataloader(self, dataset, collate_fn, is_train):
         if is_train:
             dataloader = DataLoader(
@@ -77,8 +100,6 @@ class FasterRCNN():
         self.fix_dimension()
         if self.args.save_features:
             self.fix_roiheads()
-        if self.args.checkpoint is not None:
-            self.load_state_dict(self.checkpoint)
 
     def save_model(self, epoch):
         save_path = f'model/alfred_model_e{epoch+1:02}.pth'
