@@ -11,12 +11,10 @@ from utils import collate_fn, fix_seed
 
 
 class FasterRCNN():
-    def __init__(self, num_classes, checkpoint=None, save_features=False):
+    def __init__(self, args):
         self.model = None
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.num_classes = num_classes
-        self.checkpoint = checkpoint
-        self.save_features = save_features
+        self.args = args
 
     def train_model(self):
         fix_seed(42)
@@ -77,9 +75,9 @@ class FasterRCNN():
     def load_model(self):
         self.model = fasterrcnn_resnet50_fpn(pretrained=True)
         self.fix_dimension()
-        if self.save_features:
+        if self.args.save_features:
             self.fix_roiheads()
-        if self.checkpoint is not None:
+        if self.args.checkpoint is not None:
             self.load_state_dict(self.checkpoint)
 
     def save_model(self, epoch):
@@ -88,7 +86,7 @@ class FasterRCNN():
 
     def fix_dimension(self):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.num_classes)
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.args.num_classes)
 
     def fix_roiheads(self):
         out_features = self.model.roi_heads.box_head.fc7.out_features
@@ -96,7 +94,7 @@ class FasterRCNN():
 
         box_roi_pool = MultiScaleRoIAlign(featmap_names=["0", "1", "2", "3"], output_size=7, sampling_ratio=2)
         box_head = TwoMLPHead(self.model.backbone.out_channels * box_roi_pool.output_size[0] ** 2, out_features)
-        box_predictor = FastRCNNPredictor(in_features, self.num_classes)
+        box_predictor = FastRCNNPredictor(in_features, self.args.num_classes)
 
         self.model.roi_heads = RoIHeads(
             box_roi_pool=box_roi_pool,
