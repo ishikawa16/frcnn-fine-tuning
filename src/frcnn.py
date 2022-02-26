@@ -1,26 +1,90 @@
-from torch import nn
+import torch
+from torch.utils.data import DataLoader
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.ops import MultiScaleRoIAlign
 
+from alfred import AlfredDataset
 from roi_heads import RoIHeads
 from two_mlp_head import TwoMLPHead
+from utils import collate_fn, fix_seed
 
 
-class FasterRCNN(nn.Module):
-    def __init__(self, num_classes, training, checkpoint=None, save_features=False, coco_pretrained=True):
-        super().__init__()
+class FasterRCNN():
+    def __init__(self, num_classes, checkpoint=None, save_features=False):
+        self.model = None
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.num_classes = num_classes
-        self.training = training
+        self.checkpoint = checkpoint
+        self.save_features = save_features
 
-        self.model = fasterrcnn_resnet50_fpn(pretrained=coco_pretrained)
+    def train_model(self):
+        fix_seed(42)
 
+        train_dataset = AlfredDataset('data/alfred-objects', split='train')
+        val_dataset = AlfredDataset('data/alfred-objects', split='valid_seen')
+
+        train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
+        val_dataloader = self.build_dataloader(val_dataset, collate_fn, is_train=False)
+
+        self.load_model()
+        self.model.to(self.device)
+
+        optimizer = self.build_optimizer()
+        num_epochs = 5
+
+        for epoch in range(num_epochs):
+            self.model.train()
+            for i, (images, targets) in enumerate(train_dataloader):
+                images = list(image.to(self.device) for image in images)
+                targets = [{k: v.to(self.device) for k, v in target.items()} for target in targets]
+
+                loss_dict = self.model(images, targets)
+                losses = sum(loss for loss in loss_dict.values())
+                loss_value = losses.item()
+
+                optimizer.zero_grad()
+                losses.backward()
+                optimizer.step()
+
+                if (i+1) % 10 == 0:
+                    print(f"Epoch #{epoch+1} Iteration #{i+1} Loss: {loss_value}")
+
+            self.save_model(epoch)
+
+    def build_dataloader(self, dataset, collate_fn, is_train):
+        if is_train:
+            dataloader = DataLoader(
+                dataset,
+                batch_size=4,
+                shuffle=True,
+                collate_fn=collate_fn
+                )
+        else:
+            dataloader = DataLoader(
+                dataset,
+                batch_size=4,
+                shuffle=False,
+                collate_fn=collate_fn
+                )
+        return dataloader
+
+    def build_optimizer(self):
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+        return optimizer
+
+    def load_model(self):
+        self.model = fasterrcnn_resnet50_fpn(pretrained=True)
         self.fix_dimension()
-        if save_features:
+        if self.save_features:
             self.fix_roiheads()
+        if self.checkpoint is not None:
+            self.load_state_dict(self.checkpoint)
 
-        if checkpoint is not None:
-            self.load_state_dict(checkpoint)
+    def save_model(self, epoch):
+        save_path = f'model/alfred_model_e{epoch+1:02}.pth'
+        torch.save(self.model.state_dict(), save_path)
 
     def fix_dimension(self):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
@@ -47,10 +111,3 @@ class FasterRCNN(nn.Module):
             nms_thresh=0.5,
             detections_per_img=100,
             )
-
-    def forward(self, images, targets=None):
-        if self.training:
-            output = self.model(images, targets)
-        else:
-            output = self.model(images)
-        return output
