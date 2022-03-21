@@ -1,6 +1,7 @@
 import argparse
 
 from frcnn import FasterRCNN
+from utils import parse_with_config
 
 
 def main(args):
@@ -18,12 +19,10 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--checkpoint')
-    parser.add_argument('--image')
     parser.add_argument('--mode', required=True)
-    parser.add_argument('--num_classes', required=True, type=int)
-    parser.add_argument('--save_features', action='store_true')
+    parser.add_argument('--config', required=True)
+    parser.add_argument('--image')
 
-    args = parser.parse_args()
+    args = parse_with_config(parser)
 
     main(args)
