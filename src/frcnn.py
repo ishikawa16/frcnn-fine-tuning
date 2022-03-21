@@ -73,7 +73,7 @@ class FasterRCNN():
     def prepare_model(self):
         self.load_model()
         if self.args.checkpoint is not None:
-            self.model.load_state_dict(self.checkpoint)
+            self.model.load_state_dict(torch.load(self.args.checkpoint))
         self.model.to(self.device)
 
     def build_dataloader(self, dataset, collate_fn, is_train):
