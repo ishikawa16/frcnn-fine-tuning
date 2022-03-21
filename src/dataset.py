@@ -8,7 +8,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 
-class AlfredDataset(Dataset):
+class ObjectDetectionDataset(Dataset):
     def __init__(self, root, split):
         super().__init__()
         self.root = root
