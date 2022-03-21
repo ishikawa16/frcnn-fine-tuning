@@ -8,7 +8,7 @@ from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.ops import MultiScaleRoIAlign
 
-from alfred import AlfredDataset
+from dataset import ObjectDetectionDataset
 from roi_heads import RoIHeads
 from two_mlp_head import TwoMLPHead
 from utils import collate_fn, fix_seed
@@ -23,8 +23,8 @@ class FasterRCNN():
     def train_model(self):
         fix_seed(42)
 
-        train_dataset = AlfredDataset('data/alfred-objects', split='train')
-        val_dataset = AlfredDataset('data/alfred-objects', split='valid_seen')
+        train_dataset = ObjectDetectionDataset('data/dataset', split='train')
+        val_dataset = ObjectDetectionDataset('data/dataset', split='valid')
 
         train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
         val_dataloader = self.build_dataloader(val_dataset, collate_fn, is_train=False)
@@ -73,7 +73,7 @@ class FasterRCNN():
     def prepare_model(self):
         self.load_model()
         if self.args.checkpoint is not None:
-            self.model.load_state_dict(self.checkpoint)
+            self.model.load_state_dict(torch.load(self.args.checkpoint))
         self.model.to(self.device)
 
     def build_dataloader(self, dataset, collate_fn, is_train):
@@ -105,7 +105,7 @@ class FasterRCNN():
             self.fix_roiheads()
 
     def save_model(self, epoch):
-        save_path = f'model/alfred_model_e{epoch+1:02}.pth'
+        save_path = f'model/model_e{epoch+1:02}.pth'
         torch.save(self.model.state_dict(), save_path)
 
     def fix_dimension(self):
