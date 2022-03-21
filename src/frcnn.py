@@ -24,7 +24,7 @@ class FasterRCNN():
         fix_seed(42)
 
         train_dataset = ObjectDetectionDataset('data/dataset', split='train')
-        val_dataset = ObjectDetectionDataset('data/dataset', split='valid_seen')
+        val_dataset = ObjectDetectionDataset('data/dataset', split='valid')
 
         train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
         val_dataloader = self.build_dataloader(val_dataset, collate_fn, is_train=False)
