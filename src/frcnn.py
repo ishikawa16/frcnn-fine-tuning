@@ -25,10 +25,10 @@ class FasterRCNN():
         fix_seed(self.args.seed)
 
         train_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='train')
-        val_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='valid')
+        valid_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='valid')
 
         train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
-        val_dataloader = self.build_dataloader(val_dataset, collate_fn, is_train=False)
+        valid_dataloader = self.build_dataloader(valid_dataset, collate_fn, is_train=False)
 
         self.load_model()
         self.model.to(self.device)
@@ -88,7 +88,7 @@ class FasterRCNN():
         else:
             dataloader = DataLoader(
                 dataset,
-                batch_size=self.args.val_batch_size,
+                batch_size=self.args.valid_batch_size,
                 shuffle=False,
                 collate_fn=collate_fn
                 )
