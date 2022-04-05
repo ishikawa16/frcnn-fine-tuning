@@ -12,7 +12,7 @@
         "__background__",
         "object"
     ],
-    "dataset_dir": "data/pfn-pic_dataset/",
+    "dataset_dir": "PATH_TO_DATASET",
     "model_dir": "model/",
     "output_dir": "output/",
     "checkpoint": "model_e05.pth"
