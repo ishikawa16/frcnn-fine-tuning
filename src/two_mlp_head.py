@@ -1,20 +1,10 @@
 import torch.nn.functional as F
-from torch import nn
+from torchvision.models.detection.faster_rcnn import TwoMLPHead
 
 
-class TwoMLPHead(nn.Module):
-    """
-    Standard heads for FPN-based models
-    Args:
-        in_channels (int): number of input channels
-        representation_size (int): size of the intermediate representation
-    """
-
+class MyTwoMLPHead(TwoMLPHead):
     def __init__(self, in_channels, representation_size):
-        super().__init__()
-
-        self.fc6 = nn.Linear(in_channels, representation_size)
-        self.fc7 = nn.Linear(representation_size, representation_size)
+        super().__init__(in_channels, representation_size)
 
     def forward(self, x):
         x = x.flatten(start_dim=1)

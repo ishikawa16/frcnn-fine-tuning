@@ -10,8 +10,8 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 from torchvision.ops import MultiScaleRoIAlign
 
 from dataset import ObjectDetectionDataset
-from roi_heads import RoIHeads
-from two_mlp_head import TwoMLPHead
+from roi_heads import MyRoIHeads
+from two_mlp_head import MyTwoMLPHead
 from utils import collate_fn, fix_seed
 
 
@@ -118,10 +118,10 @@ class FasterRCNN():
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
 
         box_roi_pool = MultiScaleRoIAlign(featmap_names=["0", "1", "2", "3"], output_size=7, sampling_ratio=2)
-        box_head = TwoMLPHead(self.model.backbone.out_channels * box_roi_pool.output_size[0] ** 2, out_features)
+        box_head = MyTwoMLPHead(self.model.backbone.out_channels * box_roi_pool.output_size[0] ** 2, out_features)
         box_predictor = FastRCNNPredictor(in_features, len(self.args.classes))
 
-        self.model.roi_heads = RoIHeads(
+        self.model.roi_heads = MyRoIHeads(
             box_roi_pool=box_roi_pool,
             box_head=box_head,
             box_predictor=box_predictor,
