@@ -1,4 +1,5 @@
 import json
+import os
 from PIL import Image
 
 import torch
@@ -21,21 +22,20 @@ class FasterRCNN():
         self.args = args
 
     def train_model(self):
-        fix_seed(42)
+        fix_seed(self.args.seed)
 
-        train_dataset = ObjectDetectionDataset('data/dataset', split='train')
-        val_dataset = ObjectDetectionDataset('data/dataset', split='valid')
+        train_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='train')
+        valid_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='valid')
 
         train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
-        val_dataloader = self.build_dataloader(val_dataset, collate_fn, is_train=False)
+        valid_dataloader = self.build_dataloader(valid_dataset, collate_fn, is_train=False)
 
         self.load_model()
         self.model.to(self.device)
 
         optimizer = self.build_optimizer()
-        num_epochs = 5
 
-        for epoch in range(num_epochs):
+        for epoch in range(self.args.num_epochs):
             self.model.train()
             for i, (images, targets) in enumerate(train_dataloader):
                 images = list(image.to(self.device) for image in images)
@@ -67,27 +67,28 @@ class FasterRCNN():
 
         output = self.model(image)
         result = {k: v.tolist() for k, v in output[0].items()}
-        with open('output/result.json', 'w') as f:
+        with open(os.path.join(self.args.output_dir, 'result.json'), 'w') as f:
             json.dump(result, f)
 
     def prepare_model(self):
         self.load_model()
         if self.args.checkpoint is not None:
-            self.model.load_state_dict(torch.load(self.args.checkpoint))
+            ckpt = os.path.join(self.args.model_dir, self.args.checkpoint)
+            self.model.load_state_dict(torch.load(ckpt))
         self.model.to(self.device)
 
     def build_dataloader(self, dataset, collate_fn, is_train):
         if is_train:
             dataloader = DataLoader(
                 dataset,
-                batch_size=4,
+                batch_size=self.args.train_batch_size,
                 shuffle=True,
                 collate_fn=collate_fn
                 )
         else:
             dataloader = DataLoader(
                 dataset,
-                batch_size=4,
+                batch_size=self.args.valid_batch_size,
                 shuffle=False,
                 collate_fn=collate_fn
                 )
@@ -95,7 +96,7 @@ class FasterRCNN():
 
     def build_optimizer(self):
         params = [p for p in self.model.parameters() if p.requires_grad]
-        optimizer = torch.optim.SGD(params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+        optimizer = torch.optim.SGD(params, **self.args.optim_args)
         return optimizer
 
     def load_model(self):
@@ -105,7 +106,7 @@ class FasterRCNN():
             self.fix_roiheads()
 
     def save_model(self, epoch):
-        save_path = f'model/model_e{epoch+1:02}.pth'
+        save_path = os.path.join(self.args.model_dir, f'model_e{epoch+1:02}.pth')
         torch.save(self.model.state_dict(), save_path)
 
     def fix_dimension(self):

@@ -54,8 +54,9 @@ class ObjectDetectionDataset(Dataset):
         return len(self.data)
 
     def load_images(self):
-        self.imgs = list(sorted(os.listdir(os.path.join(self.root, 'image'))))
+        images_path = os.path.join(self.root, 'image')
+        self.imgs = list(sorted(os.listdir(images_path)))
 
     def load_data(self):
-        with open(os.path.join(self.root, f'{self.split}.jsonl')) as f:
-            self.data = sorted([json.loads(line) for line in f], key=lambda x:x['id'])
+        data_path = os.path.join(self.root, f'{self.split}.jsonl')
+        self.data = sorted([json.loads(line) for line in open(data_path)], key=lambda x:x['id'])
