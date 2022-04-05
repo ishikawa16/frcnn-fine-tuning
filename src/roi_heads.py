@@ -11,37 +11,32 @@ from torchvision.models.detection.roi_heads import (
 
 
 class MyRoIHeads(RoIHeads):
-    def __init__(
-        self,
-        box_roi_pool,
-        box_head,
-        box_predictor,
-        # Faster R-CNN training
-        fg_iou_thresh,
-        bg_iou_thresh,
-        batch_size_per_image,
-        positive_fraction,
-        bbox_reg_weights,
-        # Faster R-CNN inference
-        score_thresh,
-        nms_thresh,
-        detections_per_img,
-        # Mask
-        mask_roi_pool=None,
-        mask_head=None,
-        mask_predictor=None,
-        keypoint_roi_pool=None,
-        keypoint_head=None,
-        keypoint_predictor=None,
-    ):
+    def __init__(self,
+                 box_roi_pool,
+                 box_head,
+                 box_predictor,
+                 # Faster R-CNN training
+                 fg_iou_thresh, bg_iou_thresh,
+                 batch_size_per_image, positive_fraction,
+                 bbox_reg_weights,
+                 # Faster R-CNN inference
+                 score_thresh,
+                 nms_thresh,
+                 detections_per_img,
+                 # Mask
+                 mask_roi_pool=None,
+                 mask_head=None,
+                 mask_predictor=None,
+                 keypoint_roi_pool=None,
+                 keypoint_head=None,
+                 keypoint_predictor=None,
+                 ):
         super().__init__(
             box_roi_pool,
             box_head,
             box_predictor,
-            fg_iou_thresh,
-            bg_iou_thresh,
-            batch_size_per_image,
-            positive_fraction,
+            fg_iou_thresh, bg_iou_thresh,
+            batch_size_per_image, positive_fraction,
             bbox_reg_weights,
             score_thresh,
             nms_thresh,
@@ -54,14 +49,13 @@ class MyRoIHeads(RoIHeads):
             keypoint_predictor,
         )
 
-    def postprocess_detections(
-        self,
-        class_logits,  # type: Tensor
-        box_regression,  # type: Tensor
-        proposals,  # type: List[Tensor]
-        image_shapes,  # type: List[Tuple[int, int]]
-        fc6_features,  # type: Tensor
-    ):
+    def postprocess_detections(self,
+                               class_logits,    # type: Tensor
+                               box_regression,  # type: Tensor
+                               proposals,       # type: List[Tensor]
+                               image_shapes,    # type: List[Tuple[int, int]]
+                               fc6_features     # type: Tensor
+                               ):
         # type: (...) -> Tuple[List[Tensor], List[Tensor], List[Tensor]]
         device = class_logits.device
         num_classes = class_logits.shape[-1]
@@ -112,7 +106,7 @@ class MyRoIHeads(RoIHeads):
             # non-maximum suppression, independently done per class
             keep = box_ops.batched_nms(boxes, scores, labels, self.nms_thresh)
             # keep only topk scoring predictions
-            keep = keep[: self.detections_per_img]
+            keep = keep[:self.detections_per_img]
             boxes, scores, labels, features = boxes[keep], scores[keep], labels[keep], features[keep]
 
             all_boxes.append(boxes)
@@ -122,13 +116,12 @@ class MyRoIHeads(RoIHeads):
 
         return all_boxes, all_scores, all_labels, all_features
 
-    def forward(
-        self,
-        features,  # type: Dict[str, Tensor]
-        proposals,  # type: List[Tensor]
-        image_shapes,  # type: List[Tuple[int, int]]
-        targets=None,  # type: Optional[List[Dict[str, Tensor]]]
-    ):
+    def forward(self,
+                features,      # type: Dict[str, Tensor]
+                proposals,     # type: List[Tensor]
+                image_shapes,  # type: List[Tuple[int, int]]
+                targets=None   # type: Optional[List[Dict[str, Tensor]]]
+                ):
         # type: (...) -> Tuple[List[Dict[str, Tensor]], Dict[str, Tensor]]
         """
         Args:
@@ -161,8 +154,12 @@ class MyRoIHeads(RoIHeads):
         losses = {}
         if self.training:
             assert labels is not None and regression_targets is not None
-            loss_classifier, loss_box_reg = fastrcnn_loss(class_logits, box_regression, labels, regression_targets)
-            losses = {"loss_classifier": loss_classifier, "loss_box_reg": loss_box_reg}
+            loss_classifier, loss_box_reg = fastrcnn_loss(
+                class_logits, box_regression, labels, regression_targets)
+            losses = {
+                "loss_classifier": loss_classifier,
+                "loss_box_reg": loss_box_reg
+            }
         else:
             boxes, scores, labels, fc6_features = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes, fc6_features)
             num_images = len(boxes)
@@ -206,8 +203,12 @@ class MyRoIHeads(RoIHeads):
 
                 gt_masks = [t["masks"] for t in targets]
                 gt_labels = [t["labels"] for t in targets]
-                rcnn_loss_mask = maskrcnn_loss(mask_logits, mask_proposals, gt_masks, gt_labels, pos_matched_idxs)
-                loss_mask = {"loss_mask": rcnn_loss_mask}
+                rcnn_loss_mask = maskrcnn_loss(
+                    mask_logits, mask_proposals,
+                    gt_masks, gt_labels, pos_matched_idxs)
+                loss_mask = {
+                    "loss_mask": rcnn_loss_mask
+                }
             else:
                 labels = [r["labels"] for r in result]
                 masks_probs = maskrcnn_inference(mask_logits, labels)
@@ -218,11 +219,8 @@ class MyRoIHeads(RoIHeads):
 
         # keep none checks in if conditional so torchscript will conditionally
         # compile each branch
-        if (
-            self.keypoint_roi_pool is not None
-            and self.keypoint_head is not None
-            and self.keypoint_predictor is not None
-        ):
+        if self.keypoint_roi_pool is not None and self.keypoint_head is not None \
+                and self.keypoint_predictor is not None:
             keypoint_proposals = [p["boxes"] for p in result]
             if self.training:
                 # during training, only focus on positive boxes
@@ -248,9 +246,11 @@ class MyRoIHeads(RoIHeads):
 
                 gt_keypoints = [t["keypoints"] for t in targets]
                 rcnn_loss_keypoint = keypointrcnn_loss(
-                    keypoint_logits, keypoint_proposals, gt_keypoints, pos_matched_idxs
-                )
-                loss_keypoint = {"loss_keypoint": rcnn_loss_keypoint}
+                    keypoint_logits, keypoint_proposals,
+                    gt_keypoints, pos_matched_idxs)
+                loss_keypoint = {
+                    "loss_keypoint": rcnn_loss_keypoint
+                }
             else:
                 assert keypoint_logits is not None
                 assert keypoint_proposals is not None
