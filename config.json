@@ -1,0 +1,19 @@
+{
+    "num_epochs": 5,
+    "train_batch_size": 4,
+    "valid_batch_size": 4,
+    "seed": 42,
+    "optim_args": {
+        "lr": 0.005,
+        "momentum": 0.9,
+        "weight_decay": 0.0005
+    },
+    "classes": [
+        "__background__",
+        "object"
+    ],
+    "dataset_dir": "PATH_TO_DATASET",
+    "model_dir": "model/",
+    "output_dir": "output/",
+    "checkpoint": "model_e05.pth"
+}
