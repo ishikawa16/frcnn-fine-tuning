@@ -9,15 +9,12 @@ from torchvision import transforms
 
 
 class ObjectDetectionDataset(Dataset):
-    def __init__(self, root, split):
+    def __init__(self, root, classes, split):
         super().__init__()
         self.root = root
         self.split = split
-        self.classes = (
-            '__background__',
-            'object'
-        )
-        self.cls2idx = {cls_: idx for idx, cls_ in enumerate(self.classes)}
+        self.classes = classes
+        self.cls2idx = {cls_: idx for idx, cls_ in enumerate(classes)}
         self.load_images()
         self.load_data()
 

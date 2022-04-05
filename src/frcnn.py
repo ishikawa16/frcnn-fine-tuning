@@ -24,8 +24,8 @@ class FasterRCNN():
     def train_model(self):
         fix_seed(self.args.seed)
 
-        train_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='train')
-        valid_dataset = ObjectDetectionDataset(self.args.dataset_dir, split='valid')
+        train_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split='train')
+        valid_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split='valid')
 
         train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
         valid_dataloader = self.build_dataloader(valid_dataset, collate_fn, is_train=False)
@@ -111,7 +111,7 @@ class FasterRCNN():
 
     def fix_dimension(self):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, self.args.num_classes)
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, len(self.args.classes))
 
     def fix_roiheads(self):
         out_features = self.model.roi_heads.box_head.fc7.out_features
@@ -119,7 +119,7 @@ class FasterRCNN():
 
         box_roi_pool = MultiScaleRoIAlign(featmap_names=["0", "1", "2", "3"], output_size=7, sampling_ratio=2)
         box_head = TwoMLPHead(self.model.backbone.out_channels * box_roi_pool.output_size[0] ** 2, out_features)
-        box_predictor = FastRCNNPredictor(in_features, self.args.num_classes)
+        box_predictor = FastRCNNPredictor(in_features, len(self.args.classes))
 
         self.model.roi_heads = RoIHeads(
             box_roi_pool=box_roi_pool,
