@@ -19,18 +19,18 @@ class ObjectDetectionDataset(Dataset):
         self.load_data()
 
     def __getitem__(self, idx):
-        img_path = os.path.join(self.root, 'image', self.imgs[idx])
+        img_path = os.path.join(self.root, "image", self.imgs[idx])
         img = Image.open(img_path)
         img = transforms.functional.to_tensor(img)
 
         data = self.data[idx]
 
-        num_objs = len(data['objects'])
+        num_objs = len(data["objects"])
         boxes = []
         labels = []
         for i in range(num_objs):
-            boxes.append(data['objects'][i]['box'])
-            labels.append(data['objects'][i]['label'])
+            boxes.append(data["objects"][i]["box"])
+            labels.append(data["objects"][i]["label"])
 
         boxes = torch.as_tensor(boxes, dtype=torch.float32)
         labels = torch.tensor([self.cls2idx[label] for label in labels], dtype=torch.int64)
@@ -51,9 +51,9 @@ class ObjectDetectionDataset(Dataset):
         return len(self.data)
 
     def load_images(self):
-        images_path = os.path.join(self.root, 'image')
+        images_path = os.path.join(self.root, "image")
         self.imgs = list(sorted(os.listdir(images_path)))
 
     def load_data(self):
-        data_path = os.path.join(self.root, f'{self.split}.jsonl')
-        self.data = sorted([json.loads(line) for line in open(data_path)], key=lambda x:x['id'])
+        data_path = os.path.join(self.root, f"{self.split}.jsonl")
+        self.data = sorted([json.loads(line) for line in open(data_path)], key=lambda x:x["id"])

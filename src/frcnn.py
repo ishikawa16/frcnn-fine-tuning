@@ -18,14 +18,14 @@ from utils import collate_fn, fix_seed
 class FasterRCNN():
     def __init__(self, args):
         self.model = None
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.args = args
 
     def train_model(self):
         fix_seed(self.args.seed)
 
-        train_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split='train')
-        valid_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split='valid')
+        train_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split="train")
+        valid_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split="valid")
 
         train_dataloader = self.build_dataloader(train_dataset, collate_fn, is_train=True)
         valid_dataloader = self.build_dataloader(valid_dataset, collate_fn, is_train=False)
@@ -67,7 +67,7 @@ class FasterRCNN():
 
         output = self.model(image)
         result = {k: v.tolist() for k, v in output[0].items()}
-        with open(os.path.join(self.args.output_dir, 'result.json'), 'w') as f:
+        with open(os.path.join(self.args.output_dir, "result.json"), "w") as f:
             json.dump(result, f)
 
     def prepare_model(self):
@@ -106,7 +106,7 @@ class FasterRCNN():
             self.fix_roiheads()
 
     def save_model(self, epoch):
-        save_path = os.path.join(self.args.model_dir, f'model_e{epoch+1:02}.pth')
+        save_path = os.path.join(self.args.model_dir, f"model_e{epoch+1:02}.pth")
         torch.save(self.model.state_dict(), save_path)
 
     def fix_dimension(self):
