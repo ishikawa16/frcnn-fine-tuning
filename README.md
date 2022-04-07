@@ -87,5 +87,5 @@ This is a repository for fine-tuning object detectors using the official PyTorch
         --config config.json \
         --image IMAGE
     ```
-    The result file will be written at `output/result.json`.  
+    The result file will be written at `output/result.jsonl`.  
     If you would like to extract the features of each bounding box, enable `--save_features`.
