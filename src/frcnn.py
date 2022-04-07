@@ -66,9 +66,28 @@ class FasterRCNN():
         image = [image.to(self.device)]
 
         output = self.model(image)
-        result = {k: v.tolist() for k, v in output[0].items()}
-        with open(os.path.join(self.args.output_dir, "result.json"), "w") as f:
-            json.dump(result, f)
+        output = {k: v.tolist() for k, v in output[0].items()}
+
+        num_objs = len(output["boxes"])
+        idx2cls = {idx: cls_ for idx, cls_ in enumerate(self.args.classes)}
+        with open(os.path.join(self.args.output_dir, "result.jsonl"), "w") as f:
+            for i in range(num_objs):
+                if self.args.save_features:
+                    result = {
+                        "box": output["boxes"][i],
+                        "label": idx2cls[output["labels"][i]],
+                        "score": output["scores"][i],
+                        "fc6_feature": output["fc6_features"][i]
+                    }
+                else:
+                    result = {
+                        "box": output["boxes"][i],
+                        "label": idx2cls[output["labels"][i]],
+                        "score": output["scores"][i]
+                    }
+
+                json.dump(result, f)
+                f.write("\n")
 
     def prepare_model(self):
         self.load_model()
@@ -130,7 +149,7 @@ class FasterRCNN():
             batch_size_per_image=512,
             positive_fraction=0.25,
             bbox_reg_weights=None,
-            score_thresh=0.05,
+            score_thresh=0.01,
             nms_thresh=0.5,
             detections_per_img=100,
             )

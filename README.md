@@ -1,5 +1,5 @@
 # frcnn-fine-tuning
-This is a repository for fine-tuning object detectors using a Pytorch implementation of Faster R-CNN.
+This is a repository for fine-tuning object detectors using the official PyTorch implementation of Faster R-CNN.
 
 ## Requirement
 - Python 3.8.10
@@ -87,5 +87,5 @@ This is a repository for fine-tuning object detectors using a Pytorch implementa
         --config config.json \
         --image IMAGE
     ```
-    The result file will be written at `output/result.json`.  
-    If you would like to extract the feature of each bounding box, enable `--save_features`.
+    The result file will be written at `output/result.jsonl`.  
+    If you would like to extract the features of each bounding box, enable `--save_features`.
