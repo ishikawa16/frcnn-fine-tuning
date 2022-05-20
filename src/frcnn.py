@@ -55,7 +55,7 @@ class FasterRCNN():
             self.save_model(epoch)
 
     def test_model(self):
-        pass
+        raise NotImplementedError
 
     def predict_oneshot(self):
         self.prepare_model()

@@ -13,7 +13,7 @@ def main(args):
     elif args.mode == "predict_oneshot":
         frcnn.predict_oneshot()
     else:
-        raise OSError("Invalid argument")
+        raise ValueError("invalid argument")
 
 
 if __name__ == "__main__":
