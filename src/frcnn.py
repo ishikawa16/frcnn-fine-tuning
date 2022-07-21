@@ -184,8 +184,8 @@ class FasterRCNN():
         print("\nevaluation result")
         print("-----------------")
         df = pd.DataFrame(result)
-        for label in set(df['label']):
-            iou_list = df[(df['label'] == label) & (df['iou'] > self.IOU_THRESHOLD)]['iou'].to_list()
+        for label in set(df["label"]):
+            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
             iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
             recall = len(iou_list) / len(df)
             print(f"{label:>4}: IoU_mean={iou_mean:.10f}, Recall={recall:.10f}")
