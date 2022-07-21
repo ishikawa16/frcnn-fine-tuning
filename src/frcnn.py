@@ -63,9 +63,6 @@ class FasterRCNN():
             self.save_model(epoch)
 
     def test_model(self):
-        self.prepare_model()
-        self.model.eval()
-
         test_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split="test")
         test_dataloader = self.build_dataloader(test_dataset, collate_fn, is_train=False)
 
@@ -73,9 +70,6 @@ class FasterRCNN():
         self.output_test_result(result_data)
 
     def predict_oneshot(self):
-        self.prepare_model()
-        self.model.eval()
-
         image = Image.open(self.args.image)
         image = transforms.functional.to_tensor(image)
         image = [image.to(self.device)]
