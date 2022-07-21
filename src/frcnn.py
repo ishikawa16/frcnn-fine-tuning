@@ -61,17 +61,14 @@ class FasterRCNN():
                     pbar.update()
 
             self.model.eval()
-            result_data = self.evaluate(valid_dataloader)
-            self.output_test_result(result_data)
+            self.evaluate(valid_dataloader)
 
             self.save_model(epoch)
 
     def test_model(self):
         test_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split="test")
         test_dataloader = self.build_dataloader(test_dataset, collate_fn, is_train=False)
-
-        result_data = self.evaluate(test_dataloader)
-        self.output_test_result(result_data)
+        self.evaluate(test_dataloader)
 
     def predict_oneshot(self):
         image = Image.open(self.args.image)
@@ -103,17 +100,22 @@ class FasterRCNN():
                 f.write("\n")
 
     def evaluate(self, dataloader):
-        result_data = []
+        result = []
         for images, targets in dataloader:
             images = [image.to(self.device) for image in images]
             gt_data = [{k: v.to(self.device) for k, v in target.items()} for target in targets]
-
             pred_data = self.model(images)
-
             for gt_datum, pred_datum in zip(gt_data, pred_data):
-                result_data += make_iou_list(gt_datum, pred_datum)
+                result += make_iou_list(gt_datum, pred_datum)
 
-        return result_data
+        print("Evaluation result")
+        print("-----------------")
+        df = pd.DataFrame(result)
+        for label in set(df["label"]):
+            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
+            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
+            recall = len(iou_list) / len(df)
+            print(f"{label:>4}: IoU_mean={iou_mean:.10f}, Recall={recall:.10f}")
 
     def prepare_model(self):
         self.load_model()
@@ -179,13 +181,3 @@ class FasterRCNN():
             nms_thresh=0.5,
             detections_per_img=100,
             )
-
-    def output_test_result(self, result):
-        print("\nevaluation result")
-        print("-----------------")
-        df = pd.DataFrame(result)
-        for label in set(df["label"]):
-            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
-            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
-            recall = len(iou_list) / len(df)
-            print(f"{label:>4}: IoU_mean={iou_mean:.10f}, Recall={recall:.10f}")
