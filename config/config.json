@@ -15,5 +15,5 @@
     "dataset_dir": "PATH_TO_DATASET",
     "model_dir": "model/",
     "output_dir": "output/",
-    "checkpoint": "model_e05.pth"
+    "checkpoint": "model.pth"
 }
