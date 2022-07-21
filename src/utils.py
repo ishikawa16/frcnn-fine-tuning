@@ -29,10 +29,10 @@ def parse_with_config(parser):
 
 def make_iou_list(gt_datum, pred_datum):
     ret =[]
-    gt_labels = gt_datum['labels'].to("cpu").detach().numpy().copy()
-    gt_boxes = gt_datum['boxes'].to("cpu").detach().numpy().copy()
+    gt_labels = gt_datum["labels"].to("cpu").detach().numpy().copy()
+    gt_boxes = gt_datum["boxes"].to("cpu").detach().numpy().copy()
     for label, gt_bb in zip(gt_labels, gt_boxes):
-        pred_bbs = pred_datum['boxes'][pred_datum['labels'] == label].to("cpu").detach().numpy().copy()
+        pred_bbs = pred_datum["boxes"][pred_datum["labels"] == label].to("cpu").detach().numpy().copy()
         iou, pred_bb = compute_iou(gt_bb, pred_bbs)
         ret.append({"gt_bb": gt_bb, "pred_bb": pred_bb, "label": label, "iou": iou})
 
