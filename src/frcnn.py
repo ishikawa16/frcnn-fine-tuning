@@ -2,6 +2,8 @@ import json
 import os
 from PIL import Image
 
+import pandas as pd
+
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -12,10 +14,12 @@ from torchvision.ops import MultiScaleRoIAlign
 from dataset import ObjectDetectionDataset
 from roi_heads import MyRoIHeads
 from two_mlp_head import MyTwoMLPHead
-from utils import collate_fn, fix_seed
+from utils import collate_fn, fix_seed, make_iou_list
 
 
 class FasterRCNN():
+    IOU_THRESHOLD = 0.5
+
     def __init__(self, args):
         self.model = None
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -55,7 +59,23 @@ class FasterRCNN():
             self.save_model(epoch)
 
     def test_model(self):
-        raise NotImplementedError
+        self.prepare_model()
+        self.model.eval()
+
+        test_dataset = ObjectDetectionDataset(self.args.dataset_dir, self.args.classes, split="test")
+        test_dataloader = self.build_dataloader(test_dataset, collate_fn, is_train=False)
+
+        result_data = []
+        for images, targets in test_dataloader:
+            images = [image.to(self.device) for image in images]
+            gt_data = [{k: v.to(self.device) for k, v in target.items()} for target in targets]
+
+            pred_data = self.model(images)
+
+            for gt_datum, pred_datum in zip(gt_data, pred_data):
+                result_data += make_iou_list(gt_datum, pred_datum)
+
+        self.output_test_result(result_data)
 
     def predict_oneshot(self):
         self.prepare_model()
@@ -153,3 +173,13 @@ class FasterRCNN():
             nms_thresh=0.5,
             detections_per_img=100,
             )
+
+    def output_test_result(self, result):
+        print("\nevaluation result")
+        print("-----------------")
+        df = pd.DataFrame(result)
+        for label in set(df['label']):
+            iou_list = df[(df['label'] == label) & (df['iou'] > self.IOU_THRESHOLD)]['iou'].to_list()
+            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
+            recall = len(iou_list) / len(df)
+            print(f"{label:>4}: IoU_mean={iou_mean:.10f}, Recall={recall:.10f}")
