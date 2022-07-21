@@ -43,7 +43,7 @@ class FasterRCNN():
         for epoch in range(self.args.num_epochs):
             self.model.train()
             running_loss = 0
-            with tqdm(desc=f"Epoch {epoch+1:02}", total=len(train_dataloader)) as pbar:
+            with tqdm(desc=f"Epoch {epoch+1:>2}", total=len(train_dataloader)) as pbar:
                 for i, (images, targets) in enumerate(train_dataloader):
                     images = list(image.to(self.device) for image in images)
                     targets = [{k: v.to(self.device) for k, v in target.items()} for target in targets]
@@ -115,7 +115,7 @@ class FasterRCNN():
             iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
             iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
             recall = len(iou_list) / len(df)
-            print(f"{label:>4}: IoU_mean={iou_mean:.10f}, Recall={recall:.10f}")
+            print(f"{label:>4}: IoU_mean={iou_mean:.6f}, Recall={recall:.6f}")
 
     def prepare_model(self):
         self.load_model()
