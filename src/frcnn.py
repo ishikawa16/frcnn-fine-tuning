@@ -3,6 +3,7 @@ import os
 from PIL import Image
 
 import pandas as pd
+from tqdm import tqdm
 
 import torch
 from torch.utils.data import DataLoader
@@ -41,20 +42,23 @@ class FasterRCNN():
 
         for epoch in range(self.args.num_epochs):
             self.model.train()
-            for i, (images, targets) in enumerate(train_dataloader):
-                images = list(image.to(self.device) for image in images)
-                targets = [{k: v.to(self.device) for k, v in target.items()} for target in targets]
+            running_loss = 0
+            with tqdm(desc=f"Epoch {epoch+1:02}", total=len(train_dataloader)) as pbar:
+                for i, (images, targets) in enumerate(train_dataloader):
+                    images = list(image.to(self.device) for image in images)
+                    targets = [{k: v.to(self.device) for k, v in target.items()} for target in targets]
 
-                loss_dict = self.model(images, targets)
-                losses = sum(loss for loss in loss_dict.values())
-                loss_value = losses.item()
+                    loss_dict = self.model(images, targets)
+                    losses = sum(loss for loss in loss_dict.values())
+                    loss_value = losses.item()
+                    running_loss += loss_value
 
-                optimizer.zero_grad()
-                losses.backward()
-                optimizer.step()
+                    optimizer.zero_grad()
+                    losses.backward()
+                    optimizer.step()
 
-                if (i+1) % 10 == 0:
-                    print(f"Epoch #{epoch+1} Iteration #{i+1} Loss: {loss_value}")
+                    pbar.set_postfix(loss=running_loss/(i+1))
+                    pbar.update()
 
             self.model.eval()
             result_data = self.evaluate(valid_dataloader)
