@@ -82,20 +82,12 @@ class FasterRCNN():
         idx2cls = {idx: cls_ for idx, cls_ in enumerate(self.args.classes)}
         with open(os.path.join(self.args.output_dir, "result.jsonl"), "w") as f:
             for i in range(num_objs):
-                if self.args.save_features:
-                    result = {
-                        "box": output["boxes"][i],
-                        "label": idx2cls[output["labels"][i]],
-                        "score": output["scores"][i],
-                        "fc6_feature": output["fc6_features"][i]
-                    }
-                else:
-                    result = {
-                        "box": output["boxes"][i],
-                        "label": idx2cls[output["labels"][i]],
-                        "score": output["scores"][i]
-                    }
-
+                result = {
+                    "box": output["boxes"][i],
+                    "label": idx2cls[output["labels"][i]],
+                    "score": output["scores"][i],
+                    "fc6_feature": output["fc6_features"][i]
+                }
                 json.dump(result, f)
                 f.write("\n")
 
@@ -148,17 +140,11 @@ class FasterRCNN():
 
     def load_model(self):
         self.model = fasterrcnn_resnet50_fpn(pretrained=True)
-        self.fix_dimension()
-        if self.args.save_features:
-            self.fix_roiheads()
+        self.fix_roiheads()
 
     def save_model(self, epoch):
         save_path = os.path.join(self.args.model_dir, f"model_e{epoch+1:02}.pth")
         torch.save(self.model.state_dict(), save_path)
-
-    def fix_dimension(self):
-        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, len(self.args.classes))
 
     def fix_roiheads(self):
         out_features = self.model.roi_heads.box_head.fc7.out_features
