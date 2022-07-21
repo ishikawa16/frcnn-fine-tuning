@@ -30,7 +30,6 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, required=True)
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--image", type=str)
-    parser.add_argument("--save_features", action="store_true")
 
     args = parse_with_config(parser)
 
