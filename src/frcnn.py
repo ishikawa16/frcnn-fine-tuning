@@ -145,7 +145,7 @@ class FasterRCNN():
             batch_size_per_image=512,
             positive_fraction=0.25,
             bbox_reg_weights=None,
-            score_thresh=0.01,
+            score_thresh=0.05,
             nms_thresh=0.5,
             detections_per_img=100,
             )
