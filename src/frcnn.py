@@ -78,18 +78,7 @@ class FasterRCNN():
         output = self.model(image)
         output = {k: v.tolist() for k, v in output[0].items()}
 
-        num_objs = len(output["boxes"])
-        idx2cls = {idx: cls_ for idx, cls_ in enumerate(self.args.classes)}
-        with open(os.path.join(self.args.output_dir, "result.jsonl"), "w") as f:
-            for i in range(num_objs):
-                result = {
-                    "box": output["boxes"][i],
-                    "label": idx2cls[output["labels"][i]],
-                    "score": output["scores"][i],
-                    "fc6_feature": output["fc6_features"][i]
-                }
-                json.dump(result, f)
-                f.write("\n")
+        self.dump_oneshot_result(output)
 
     def evaluate(self, dataloader):
         result = []
@@ -172,3 +161,17 @@ class FasterRCNN():
             recall = len(iou_list) / len(df)
             print(f"{label:>4}: IoU_mean={iou_mean:.6f}, Recall={recall:.6f}")
         print()
+
+    def dump_oneshot_result(self, output):
+        num_objs = len(output["boxes"])
+        idx2cls = {idx: cls_ for idx, cls_ in enumerate(self.args.classes)}
+        with open(os.path.join(self.args.output_dir, "result.jsonl"), "w") as f:
+            for i in range(num_objs):
+                result = {
+                    "box": output["boxes"][i],
+                    "label": idx2cls[output["labels"][i]],
+                    "score": output["scores"][i],
+                    "fc6_feature": output["fc6_features"][i]
+                }
+                json.dump(result, f)
+                f.write("\n")
