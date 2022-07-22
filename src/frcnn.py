@@ -100,14 +100,7 @@ class FasterRCNN():
             for gt_datum, pred_datum in zip(gt_data, pred_data):
                 result += make_iou_list(gt_datum, pred_datum)
 
-        print("Evaluation result")
-        print("-----------------")
-        df = pd.DataFrame(result)
-        for label in set(df["label"]):
-            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
-            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
-            recall = len(iou_list) / len(df)
-            print(f"{label:>4}: IoU_mean={iou_mean:.6f}, Recall={recall:.6f}")
+        self.output_eval_result(result)
 
     def prepare_model(self):
         self.load_model()
@@ -167,3 +160,15 @@ class FasterRCNN():
             nms_thresh=0.5,
             detections_per_img=100,
             )
+
+    def output_eval_result(self, result):
+        print()
+        print("Evaluation result")
+        print("-----------------")
+        df = pd.DataFrame(result)
+        for label in set(df["label"]):
+            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
+            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
+            recall = len(iou_list) / len(df)
+            print(f"{label:>4}: IoU_mean={iou_mean:.6f}, Recall={recall:.6f}")
+        print()
