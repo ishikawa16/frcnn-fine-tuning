@@ -78,18 +78,7 @@ class FasterRCNN():
         output = self.model(image)
         output = {k: v.tolist() for k, v in output[0].items()}
 
-        num_objs = len(output["boxes"])
-        idx2cls = {idx: cls_ for idx, cls_ in enumerate(self.args.classes)}
-        with open(os.path.join(self.args.output_dir, "result.jsonl"), "w") as f:
-            for i in range(num_objs):
-                result = {
-                    "box": output["boxes"][i],
-                    "label": idx2cls[output["labels"][i]],
-                    "score": output["scores"][i],
-                    "fc6_feature": output["fc6_features"][i]
-                }
-                json.dump(result, f)
-                f.write("\n")
+        self.dump_oneshot_result(output)
 
     def evaluate(self, dataloader):
         result = []
@@ -100,14 +89,7 @@ class FasterRCNN():
             for gt_datum, pred_datum in zip(gt_data, pred_data):
                 result += make_iou_list(gt_datum, pred_datum)
 
-        print("Evaluation result")
-        print("-----------------")
-        df = pd.DataFrame(result)
-        for label in set(df["label"]):
-            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
-            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
-            recall = len(iou_list) / len(df)
-            print(f"{label:>4}: IoU_mean={iou_mean:.6f}, Recall={recall:.6f}")
+        self.output_eval_result(result)
 
     def prepare_model(self):
         self.load_model()
@@ -167,3 +149,29 @@ class FasterRCNN():
             nms_thresh=0.5,
             detections_per_img=100,
             )
+
+    def output_eval_result(self, result):
+        print()
+        print("Evaluation result")
+        print("-----------------")
+        df = pd.DataFrame(result)
+        for label in set(df["label"]):
+            iou_list = df[(df["label"] == label) & (df["iou"] > self.IOU_THRESHOLD)]["iou"].to_list()
+            iou_mean = sum(iou_list) / len(iou_list) if len(iou_list) != 0 else 0.0
+            recall = len(iou_list) / len(df)
+            print(f"{label:>4}: IoU_mean={iou_mean:.6f}, Recall={recall:.6f}")
+        print()
+
+    def dump_oneshot_result(self, output):
+        num_objs = len(output["boxes"])
+        idx2cls = {idx: cls_ for idx, cls_ in enumerate(self.args.classes)}
+        with open(os.path.join(self.args.output_dir, "result.jsonl"), "w") as f:
+            for i in range(num_objs):
+                result = {
+                    "box": output["boxes"][i],
+                    "label": idx2cls[output["labels"][i]],
+                    "score": output["scores"][i],
+                    "fc6_feature": output["fc6_features"][i]
+                }
+                json.dump(result, f)
+                f.write("\n")
