@@ -4,25 +4,32 @@ from frcnn import FasterRCNN
 from utils import parse_with_config
 
 
-def main(args):
-    frcnn = FasterRCNN(args)
-    if args.mode == "train":
+def main(opts):
+    frcnn = FasterRCNN(opts)
+
+    if opts.mode == "train":
         frcnn.train_model()
-    elif args.mode == "test":
+
+    elif opts.mode == "test":
+        frcnn.prepare_model()
+        frcnn.model.eval()
         frcnn.test_model()
-    elif args.mode == "predict_oneshot":
+
+    elif opts.mode == "predict_oneshot":
+        frcnn.prepare_model()
+        frcnn.model.eval()
         frcnn.predict_oneshot()
+
     else:
-        raise OSError("Invalid argument")
+        raise ValueError("Invalid argument")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--mode", required=True)
-    parser.add_argument("--config", required=True)
-    parser.add_argument("--image")
-    parser.add_argument("--save_features", action="store_true")
+    parser.add_argument("--mode", type=str, required=True)
+    parser.add_argument("--config", type=str, required=True)
+    parser.add_argument("--image", type=str)
 
     args = parse_with_config(parser)
 

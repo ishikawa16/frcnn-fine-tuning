@@ -76,7 +76,7 @@ This is a repository for fine-tuning object detectors using the official PyTorch
     ```
     python src/main.py \
         --mode train \
-        --config config.json
+        --config config/config.json
     ```
     The models will be saved at `model/model_exx.pth`.
 
@@ -84,8 +84,7 @@ This is a repository for fine-tuning object detectors using the official PyTorch
     ```
     python src/main.py \
         --mode predict_oneshot \
-        --config config.json \
+        --config config/config.json \
         --image IMAGE
     ```
     The result file will be written at `output/result.jsonl`.  
-    If you would like to extract the features of each bounding box, enable `--save_features`.

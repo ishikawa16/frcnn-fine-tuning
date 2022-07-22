@@ -1,5 +1,6 @@
 import json
 import os
+from glob import glob
 
 from PIL import Image
 
@@ -15,15 +16,14 @@ class ObjectDetectionDataset(Dataset):
         self.split = split
         self.classes = classes
         self.cls2idx = {cls_: idx for idx, cls_ in enumerate(classes)}
-        self.load_images()
         self.load_data()
 
     def __getitem__(self, idx):
-        img_path = os.path.join(self.root, "image", self.imgs[idx])
+        data = self.data[idx]
+
+        img_path = glob(os.path.join(self.root, "image", data["id"] + ".*"))[0]
         img = Image.open(img_path)
         img = transforms.functional.to_tensor(img)
-
-        data = self.data[idx]
 
         num_objs = len(data["objects"])
         boxes = []
@@ -49,10 +49,6 @@ class ObjectDetectionDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
-
-    def load_images(self):
-        images_path = os.path.join(self.root, "image")
-        self.imgs = list(sorted(os.listdir(images_path)))
 
     def load_data(self):
         data_path = os.path.join(self.root, f"{self.split}.jsonl")
